@@ -1,6 +1,8 @@
 package commentpbc.infra;
 
 import commentpbc.domain.*;
+
+import java.util.ArrayList;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -23,22 +25,34 @@ public class CommentPbcController {
         method = RequestMethod.PUT,
         produces = "application/json;charset=UTF-8"
     )
-    public CommentPbc comment(
+    public ArrayList<CommentPbc> commentPbc(
         @PathVariable(value = "id") String id,
         @RequestBody CommentCommand commentCommand,
         HttpServletRequest request,
         HttpServletResponse response
     ) throws Exception {
-        System.out.println("##### /commentPbc/comment  called #####");
-        Optional<CommentPbc> optionalCommentPbc = commentPbcRepository.findById(
-            id
-        );
+        System.out.println("##### /commentPbc/commentPbc  called #####");
 
-        optionalCommentPbc.orElseThrow(() -> new Exception("No Entity Found"));
-        CommentPbc commentPbc = optionalCommentPbc.get();
-        commentPbc.comment(commentCommand);
+        final ArrayList<CommentPbc> commentPbcContainer = new ArrayList<CommentPbc>();
 
-        commentPbcRepository.save(commentPbc);
-        return commentPbc;
+        commentPbcRepository
+            .findById(id)
+            .ifPresentOrElse(commentPbc ->{
+                commentPbc.comment(commentCommand);
+
+                commentPbcRepository.save(commentPbc);
+                commentPbcContainer.add(commentPbc);
+            }, ()-> {
+                CommentPbc commentPbc = new CommentPbc();
+
+                if(commentPbc.getTopicId() == null) {
+                    commentPbc.setTopicId(id);
+                }
+                commentPbc.comment(commentCommand);
+                commentPbcRepository.save(commentPbc);
+                commentPbcContainer.add(commentPbc);
+            });
+
+        return commentPbcContainer;
     }
 }
