@@ -31,17 +31,15 @@ public class CommentPbc {
 
     public void comment(CommentCommand commentCommand) {
         //implement business logic here: Create a new Comment if there`s no topicId and existing entity. and add the userId and content.
-        if (this.topicId == null) {
-            this.topicId = commentCommand.getTopicId();
-        }
         this.userId = commentCommand.getUserId();
         this.content = commentCommand.getContent();
 
+        CommentPbcRepository repository = CommentApplication.applicationContext.getBean(CommentPbcRepository.class);
+        repository.save(this);
         repository().save(this);
 
         //publish event
         CommentAdded commentAdded = new CommentAdded(this);
-        commentAdded.set(commentCommand.get());
         commentAdded.publishAfterCommit();
     }
 }
